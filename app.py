@@ -41,25 +41,25 @@ def contact():
         name = request.form["name"]
         return """
         <html>
-        <body style="background-color: lightyellow; text-align: center;">
-            <h1>Hello """ + name + """!!</h1>
-            <p>Thanks for contacting me!!</p>
-            <a href="/">Go back home!!</a>
+        <body style="background-color: #1a1a2e; text-align: center; font-family: Arial;">
+            <h1 style="color: #e94560; font-size: 50px; margin-top: 50px;">Hello """ + name + """!!</h1>
+            <p style="color: white; font-size: 20px;">Thanks for contacting me!!</p>
+            <a href="/" style="background-color: #e94560; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go back home!!</a>
         </body>
         </html>
         """
     return """
     <html>
-    <body style="background-color: lightyellow; text-align: center;">
-        <h1>Contact Me!!</h1>
+    <body style="background-color: #1a1a2e; text-align: center; font-family: Arial;">
+        <h1 style="color: #e94560; font-size: 50px; margin-top: 50px;">Contact Me!!</h1>
         <form method="POST">
-            <input type="text" name="name" placeholder="Your name!!">
-            <button type="submit">Submit!!</button>
+            <input type="text" name="name" placeholder="Your name!!" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
+            <button type="submit" style="background-color: #e94560; color: white; padding: 10px 20px; font-size: 18px; border: none; border-radius: 5px;">Submit!!</button>
         </form>
+        <a href="/" style="color: #e94560;">Go back home!!</a>
     </body>
     </html>
     """
-
 @app.route("/calculator", methods=["GET", "POST"])
 def calculator():
     result = ""
@@ -80,24 +80,21 @@ def calculator():
                 result = a / b
     return """
     <html>
-    <body style="background-color: #f0f0f0; text-align: center;">
-        <h1>Calculator!!</h1>
+    <body style="background-color: #1a1a2e; text-align: center; font-family: Arial;">
+        <h1 style="color: #e94560; font-size: 50px; margin-top: 50px;">Calculator!!</h1>
         <form method="POST">
-            <input type="number" name="a" placeholder="First number">
-            <input type="number" name="b" placeholder="Second number">
-            <select name="operation">
+            <input type="number" name="a" placeholder="First number" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
+            <input type="number" name="b" placeholder="Second number" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
+            <select name="operation" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
                 <option value="add">Add +</option>
                 <option value="subtract">Subtract -</option>
                 <option value="multiply">Multiply *</option>
                 <option value="divide">Divide /</option>
             </select>
-            <button type="submit">Calculate!!</button>
+            <button type="submit" style="background-color: #e94560; color: white; padding: 10px 20px; font-size: 18px; border: none; border-radius: 5px;">Calculate!!</button>
         </form>
-        <h2>Answer: """ + str(result) + """</h2>
-        <a href="/">Go back home!!</a>
+        <h2 style="color: white; font-size: 30px;">Answer: """ + str(result) + """</h2>
+        <a href="/" style="background-color: #e94560; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go back home!!</a>
     </body>
     </html>
     """
-
-app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
