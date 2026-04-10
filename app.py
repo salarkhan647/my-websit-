@@ -6,11 +6,15 @@ app = Flask(__name__)
 def home():
     return """
     <html>
-    <body style="background-color: lightblue; text-align: center;">
-        <h1 style="color: white;">Hello Salar!!</h1>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-        <a href="/calculator">Calculator</a>
+    <body style="background-color: #1a1a2e; text-align: center; font-family: Arial;">
+    <h1 style="color: #e94560; font-size: 50px; margin-top: 50px;">Hello Salar!!</h1>
+    <p style="color: white; font-size: 20px;">Welcome to my website!!</p>
+    <div style="margin-top: 30px;">
+        <a href="/about" style="background-color: #e94560; color: white; padding: 10px 20px; margin: 10px; text-decoration: none; border-radius: 5px;">About</a>
+        <a href="/contact" style="background-color: #e94560; color: white; padding: 10px 20px; margin: 10px; text-decoration: none; border-radius: 5px;">Contact</a>
+        <a href="/calculator" style="background-color: #e94560; color: white; padding: 10px 20px; margin: 10px; text-decoration: none; border-radius: 5px;">Calculator</a>
+    </div>
+    
     </body>
     </html>
     """
