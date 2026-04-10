@@ -23,11 +23,15 @@ def home():
 def about():
     return """
     <html>
-    <body style="background-color: lightgreen; text-align: center;">
-        <h1>About Me!!</h1>
-        <p>My name is Salar!!</p>
-        <a href="/">Go back home!!</a>
-    </body>
+    <body style="background-color: #1a1a2e; text-align: center; font-family: Arial;">
+        <h1 style="color: #e94560; font-size: 50px; margin-top: 50px;">About Me!!</h1>
+        <p style="color: white; font-size: 20px;">My name is Salar!!</p>
+        <p style="color: white; font-size: 20px;">I am learning Python and Flask!!</p>
+        <p style="color: white; font-size: 20px;">I build real websites and apps!!</p>
+        <div style="margin-top: 30px;">
+            <a href="/" style="background-color: #e94560; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go back home!!</a>
+        </div>
+     </body>
     </html>
     """
 
