@@ -60,41 +60,72 @@ def contact():
     </body>
     </html>
     """
+
 @app.route("/calculator", methods=["GET", "POST"])
 def calculator():
-    result = ""
-    if request.method == "POST":
-        a = float(request.form["a"])
-        b = float(request.form["b"])
-        operation = request.form["operation"]
-        if operation == "add":
-            result = a + b
-        elif operation == "subtract":
-            result = a - b
-        elif operation == "multiply":
-            result = a * b
-        elif operation == "divide":
-            if b == 0:
-                result = "Error!! Cannot divide by zero!!"
-            else:
-                result = a / b
     return """
     <html>
     <body style="background-color: #1a1a2e; text-align: center; font-family: Arial;">
-        <h1 style="color: #e94560; font-size: 50px; margin-top: 50px;">Calculator!!</h1>
-        <form method="POST">
-            <input type="number" name="a" placeholder="First number" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
-            <input type="number" name="b" placeholder="Second number" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
-            <select name="operation" style="padding: 10px; font-size: 18px; border-radius: 5px; border: none; margin: 10px;">
-                <option value="add">Add +</option>
-                <option value="subtract">Subtract -</option>
-                <option value="multiply">Multiply *</option>
-                <option value="divide">Divide /</option>
-            </select>
-            <button type="submit" style="background-color: #e94560; color: white; padding: 10px 20px; font-size: 18px; border: none; border-radius: 5px;">Calculate!!</button>
-        </form>
-        <h2 style="color: white; font-size: 30px;">Answer: """ + str(result) + """</h2>
+        <h1 style="color: #e94560; font-size: 40px; margin-top: 30px;">Calculator!!</h1>
+        
+        <div style="display: inline-block; background-color: #16213e; padding: 20px; border-radius: 10px;">
+            
+            <input id="display" type="text" value="0" readonly
+            style="width: 280px; padding: 15px; font-size: 30px; text-align: right; 
+            background-color: #0f3460; color: white; border: none; border-radius: 5px; margin-bottom: 10px;">
+            
+            <div>
+                <button onclick="press('7')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">7</button>
+                <button onclick="press('8')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">8</button>
+                <button onclick="press('9')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">9</button>
+                <button onclick="press('+')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#533483;color:white;border:none;border-radius:5px;">+</button>
+            </div>
+            <div>
+                <button onclick="press('4')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">4</button>
+                <button onclick="press('5')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">5</button>
+                <button onclick="press('6')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">6</button>
+                <button onclick="press('-')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#533483;color:white;border:none;border-radius:5px;">-</button>
+            </div>
+            <div>
+                <button onclick="press('1')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">1</button>
+                <button onclick="press('2')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">2</button>
+                <button onclick="press('3')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">3</button>
+                <button onclick="press('*')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#533483;color:white;border:none;border-radius:5px;">*</button>
+            </div>
+            <div>
+                <button onclick="clearDisplay()" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">C</button>
+                <button onclick="press('0')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#e94560;color:white;border:none;border-radius:5px;">0</button>
+                <button onclick="calculate()" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#533483;color:white;border:none;border-radius:5px;">=</button>
+                <button onclick="press('/')" style="width:60px;height:60px;margin:5px;font-size:20px;background-color:#533483;color:white;border:none;border-radius:5px;">/</button>
+            </div>
+        </div>
+
+        <br><br>
         <a href="/" style="background-color: #e94560; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go back home!!</a>
+
+        <script>
+            function press(val) {
+                var display = document.getElementById('display');
+                if (display.value == '0') {
+                    display.value = val;
+                } else {
+                    display.value += val;
+                }
+            }
+
+            function clearDisplay() {
+                document.getElementById('display').value = '0';
+            }
+
+            function calculate() {
+                try {
+                    var result = eval(document.getElementById('display').value);
+                    document.getElementById('display').value = result;
+                } catch(e) {
+                    document.getElementById('display').value = 'Error';
+                }
+            }
+        </script>
     </body>
     </html>
     """
