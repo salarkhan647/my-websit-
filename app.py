@@ -172,7 +172,8 @@ def about():
         <div class="card">
             <p>My name is <span>Salar!!</span></p>
             <p>I am learning <span>Python and Flask!!</span></p>
-            <p>I build real websites and apps!!</p>
+            <p>I can build  websites and apps!!</p>
+            <p> we provide ai servise!!</p>
         </div>
         <a href="/" class="back-btn">← Home</a>
     </body>
