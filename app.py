@@ -1,353 +1,345 @@
 from flask import Flask, request
 import os
+
 app = Flask(__name__)
+
+# ── Shared header + footer ──────────────────────────────────────────────────
+
+NAV = """
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #1a1a2e;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-image: radial-gradient(circle at 20% 50%, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10, 22, 40, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(233,69,96,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    color: #e94560;
+    font-size: 20px;
+    text-decoration: none;
+    letter-spacing: 2px;
+    text-shadow: 0 0 14px rgba(233,69,96,0.5);
+  }
+  nav { display: flex; gap: 6px; }
+  nav a {
+    color: #a0aec0;
+    text-decoration: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.25s;
+    border: 1px solid transparent;
+  }
+  nav a:hover, nav a.active {
+    color: #fff;
+    background: rgba(233,69,96,0.15);
+    border-color: rgba(233,69,96,0.4);
+    text-shadow: 0 0 8px rgba(233,69,96,0.6);
+  }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: rgba(10, 22, 40, 0.92);
+    border-top: 1px solid rgba(233,69,96,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 22px 40px;
+  }
+  footer a {
+    color: #a0aec0;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  footer a:hover { color: #e94560; }
+  footer span { color: rgba(233,69,96,0.3); font-size: 18px; }
+
+  /* ── SHARED COMPONENTS ── */
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    color: #e94560;
+    text-shadow: 0 0 30px rgba(233,69,96,0.5);
+    margin-bottom: 20px;
+  }
+  .card {
+    background: linear-gradient(145deg, #16213e, #0f3460);
+    border-radius: 16px;
+    border: 1px solid rgba(233,69,96,0.2);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    padding: 35px 45px;
+  }
+  .btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #e94560, #c73652);
+    color: white;
+    padding: 11px 26px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
+  .btn.purple { background: linear-gradient(135deg, #533483, #3d2468); }
+  .btn.purple:hover { box-shadow: 0 6px 20px rgba(83,52,131,0.5); }
+  input[type=text], input[type=number] {
+    background: #0a1628;
+    color: white;
+    border: 1px solid rgba(233,69,96,0.3);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 16px;
+    font-family: 'Rajdhani', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #e94560; box-shadow: 0 0 10px rgba(233,69,96,0.3); }
+</style>
+
+<header>
+  <a class="logo" href="/">SALAR.DEV</a>
+  <nav>
+    <a href="/" {home}>Home</a>
+    <a href="/calculator" {calc}>Calculator</a>
+    <a href="/password" {pwd}>🔐 Password</a>
+  </nav>
+</header>
+"""
+
+FOOTER = """
+<footer>
+  <a href="/about">About Me</a>
+  <span>·</span>
+  <a href="/contact">Contact</a>
+  <span>·</span>
+  <span style="color:#a0aec0; font-size:13px;">© 2026 Salar</span>
+</footer>
+"""
+
+def page(content, active=""):
+    nav = NAV.replace("{home}", 'class="active"' if active=="home" else "") \
+             .replace("{calc}", 'class="active"' if active=="calc" else "") \
+             .replace("{pwd}",  'class="active"' if active=="pwd"  else "")
+    return f"<html><head>{nav}</head><body>{nav}<main>{content}</main>{FOOTER}</body></html>"
+
+
+# ── ROUTES ──────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def home():
-    return """
-    <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-                background-color: #1a1a2e;
-                text-align: center;
-                font-family: 'Rajdhani', Arial, sans-serif;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background-image: radial-gradient(circle at 20% 50%, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
-            }
-            h1 {
-                font-family: 'Orbitron', Arial, sans-serif;
-                color: #e94560;
-                font-size: 52px;
-                margin-bottom: 10px;
-                text-shadow: 0 0 30px rgba(233,69,96,0.5);
-                animation: glow 2s ease-in-out infinite alternate;
-            }
-            @keyframes glow {
-                from { text-shadow: 0 0 20px rgba(233,69,96,0.4); }
-                to { text-shadow: 0 0 40px rgba(233,69,96,0.8), 0 0 60px rgba(233,69,96,0.3); }
-            }
-            p { color: #a0aec0; font-size: 20px; margin-bottom: 40px; letter-spacing: 2px; }
-            .nav { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-            .nav a {
-                background: linear-gradient(135deg, #e94560, #c73652);
-                color: white;
-                padding: 12px 24px;
-                text-decoration: none;
-                border-radius: 8px;
-                font-size: 16px;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                transition: all 0.3s;
-                border: 1px solid rgba(233,69,96,0.3);
-            }
-            .nav a:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(233,69,96,0.4); }
-        </style>
-    </head>
-    <body>
-        <h1>Hello Salar!!</h1>
-        <p>Welcome to my website!!</p>
-        <div class="nav">
-            <a href="/calculator">Calculator</a>
-            <a href="/about">About</a>
-            <a href="/contact">Contact</a>
-            <a href="/password">🔐 Password Generator</a>
-        </div>
-    </body>
-    </html>
+    content = """
+    <style>
+      .hero-title { font-size: 58px; animation: glow 2s ease-in-out infinite alternate; }
+      @keyframes glow {
+        from { text-shadow: 0 0 20px rgba(233,69,96,0.4); }
+        to   { text-shadow: 0 0 50px rgba(233,69,96,0.9), 0 0 80px rgba(233,69,96,0.3); }
+      }
+      .sub { color: #a0aec0; font-size: 20px; letter-spacing: 3px; margin-bottom: 10px; }
+    </style>
+    <h1 class="hero-title">Hello Salar!!</h1>
+    <p class="sub">Welcome to my website!!</p>
     """
+    return page(content, "home")
 
-@app.route("/calculator", methods=["GET", "POST"])
+
+@app.route("/calculator")
 def calculator():
-    return """
-    <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-                background-color: #1a1a2e;
-                text-align: center;
-                font-family: 'Rajdhani', Arial, sans-serif;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background-image: radial-gradient(circle at 20% 50%, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
-            }
-            h1 { font-family: 'Orbitron', Arial, sans-serif; color: #e94560; font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px rgba(233,69,96,0.5); }
-            .calc-wrap { background: linear-gradient(145deg, #16213e, #0f3460); padding: 25px; border-radius: 16px; border: 1px solid rgba(233,69,96,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-            #display { width: 290px; padding: 15px; font-size: 30px; text-align: right; background-color: #0a1628; color: #e94560; border: 1px solid rgba(233,69,96,0.3); border-radius: 8px; margin-bottom: 15px; font-family: 'Orbitron', monospace; }
-            button { width: 62px; height: 62px; margin: 4px; font-size: 20px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; transition: all 0.15s; }
-            .num { background: linear-gradient(135deg, #e94560, #c73652); color: white; }
-            .op { background: linear-gradient(135deg, #533483, #3d2468); color: white; }
-            button:hover { transform: scale(1.08); box-shadow: 0 4px 15px rgba(233,69,96,0.4); }
-            button:active { transform: scale(0.95); }
-            .back-btn { display: inline-block; margin-top: 25px; background: linear-gradient(135deg, #e94560, #c73652); color: white; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; }
-            .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
-        </style>
-    </head>
-    <body>
-        <h1>Calculator!!</h1>
-        <div class="calc-wrap">
-            <input id="display" type="text" value="0" readonly>
-            <div>
-                <button class="num" onclick="press('7')">7</button>
-                <button class="num" onclick="press('8')">8</button>
-                <button class="num" onclick="press('9')">9</button>
-                <button class="op" onclick="press('+')">+</button>
-            </div>
-            <div>
-                <button class="num" onclick="press('4')">4</button>
-                <button class="num" onclick="press('5')">5</button>
-                <button class="num" onclick="press('6')">6</button>
-                <button class="op" onclick="press('-')">-</button>
-            </div>
-            <div>
-                <button class="num" onclick="press('1')">1</button>
-                <button class="num" onclick="press('2')">2</button>
-                <button class="num" onclick="press('3')">3</button>
-                <button class="op" onclick="press('*')">*</button>
-            </div>
-            <div>
-                <button class="op" onclick="clearDisplay()">C</button>
-                <button class="num" onclick="press('0')">0</button>
-                <button class="op" onclick="calculate()">=</button>
-                <button class="op" onclick="press('/')">/</button>
-            </div>
-        </div>
-        <a href="/" class="back-btn">← Home</a>
-        <script>
-            function press(val) {
-                var d = document.getElementById('display');
-                d.value = d.value == '0' ? val : d.value + val;
-            }
-            function clearDisplay() { document.getElementById('display').value = '0'; }
-            function calculate() {
-                try { document.getElementById('display').value = eval(document.getElementById('display').value); }
-                catch(e) { document.getElementById('display').value = 'Error'; }
-            }
-        </script>
-    </body>
-    </html>
+    content = """
+    <style>
+      #display { width:290px; padding:15px; font-size:28px; text-align:right;
+        background:#0a1628; color:#e94560; border:1px solid rgba(233,69,96,0.3);
+        border-radius:8px; margin-bottom:14px; font-family:'Orbitron',monospace; outline:none; }
+      .calc-grid button { width:64px; height:64px; margin:4px; font-size:20px;
+        border:none; border-radius:8px; cursor:pointer;
+        font-family:'Rajdhani',sans-serif; font-weight:700; transition:all 0.15s; }
+      .num { background:linear-gradient(135deg,#e94560,#c73652); color:white; }
+      .op  { background:linear-gradient(135deg,#533483,#3d2468); color:white; }
+      .calc-grid button:hover  { transform:scale(1.08); box-shadow:0 4px 15px rgba(233,69,96,0.4); }
+      .calc-grid button:active { transform:scale(0.95); }
+    </style>
+    <h1 style="font-size:36px;">Calculator</h1>
+    <div class="card">
+      <input id="display" type="text" value="0" readonly><br>
+      <div class="calc-grid">
+        <button class="num" onclick="press('7')">7</button>
+        <button class="num" onclick="press('8')">8</button>
+        <button class="num" onclick="press('9')">9</button>
+        <button class="op"  onclick="press('+')">+</button><br>
+        <button class="num" onclick="press('4')">4</button>
+        <button class="num" onclick="press('5')">5</button>
+        <button class="num" onclick="press('6')">6</button>
+        <button class="op"  onclick="press('-')">−</button><br>
+        <button class="num" onclick="press('1')">1</button>
+        <button class="num" onclick="press('2')">2</button>
+        <button class="num" onclick="press('3')">3</button>
+        <button class="op"  onclick="press('*')">×</button><br>
+        <button class="op"  onclick="clearD()">C</button>
+        <button class="num" onclick="press('0')">0</button>
+        <button class="op"  onclick="calc()">=</button>
+        <button class="op"  onclick="press('/')">÷</button>
+      </div>
+    </div>
+    <script>
+      function press(v){ var d=document.getElementById('display'); d.value=d.value=='0'?v:d.value+v; }
+      function clearD(){ document.getElementById('display').value='0'; }
+      function calc(){ try{ document.getElementById('display').value=eval(document.getElementById('display').value); }catch(e){ document.getElementById('display').value='Error'; } }
+    </script>
     """
+    return page(content, "calc")
+
+
+@app.route("/password")
+def password():
+    content = """
+    <style>
+      .pw-card { width:380px; text-align:left; }
+      .pw-card label.field-label { color:#a0aec0; font-size:15px; letter-spacing:1px; display:block; margin-bottom:6px; }
+      .pw-card input[type=number] { width:100%; margin-bottom:18px; }
+      .options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+      .opt { display:flex; align-items:center; gap:8px; background:#0a1628;
+        padding:10px 14px; border-radius:8px; border:1px solid rgba(233,69,96,0.15);
+        cursor:pointer; transition:border-color 0.2s; }
+      .opt:hover { border-color:rgba(233,69,96,0.5); }
+      .opt input { accent-color:#e94560; width:16px; height:16px; }
+      .opt span { color:#a0aec0; font-size:15px; font-weight:600; }
+      #result { width:100%; padding:12px 15px; font-size:14px; font-family:'Courier New',monospace;
+        background:#0a1628; color:#e94560; border:1px solid rgba(233,69,96,0.3);
+        border-radius:8px; margin-bottom:6px; text-align:center; min-height:46px;
+        word-break:break-all; letter-spacing:2px; }
+      #copy-msg { color:#4caf50; font-size:13px; height:18px; margin-bottom:12px; text-align:center; }
+      .btn-row { display:flex; gap:10px; }
+      .btn-row .btn { flex:1; padding:12px; font-size:15px; text-align:center; }
+    </style>
+    <h1 style="font-size:34px;">🔐 Password Generator</h1>
+    <div class="card pw-card">
+      <label class="field-label">Password Length</label>
+      <input type="number" id="length" value="12" min="4" max="64">
+      <div class="options">
+        <label class="opt"><input type="checkbox" id="lower" checked><span>Lowercase</span></label>
+        <label class="opt"><input type="checkbox" id="upper" checked><span>Uppercase</span></label>
+        <label class="opt"><input type="checkbox" id="digits" checked><span>Digits</span></label>
+        <label class="opt"><input type="checkbox" id="symbols" checked><span>Symbols</span></label>
+      </div>
+      <div id="result">Click Generate!!</div>
+      <div id="copy-msg"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="generatePassword()">Generate</button>
+        <button class="btn purple" onclick="copyPassword()">Copy</button>
+      </div>
+    </div>
+    <script>
+      function generatePassword(){
+        const len=parseInt(document.getElementById('length').value);
+        let chars='';
+        if(document.getElementById('lower').checked)   chars+='abcdefghijklmnopqrstuvwxyz';
+        if(document.getElementById('upper').checked)   chars+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if(document.getElementById('digits').checked)  chars+='0123456789';
+        if(document.getElementById('symbols').checked) chars+='!@#$%^&*()_+-=[]{}|;:,.<>?';
+        if(!chars){ document.getElementById('result').innerText='Select at least one option!!'; return; }
+        let pwd='';
+        for(let i=0;i<len;i++) pwd+=chars[Math.floor(Math.random()*chars.length)];
+        document.getElementById('result').innerText=pwd;
+        document.getElementById('copy-msg').innerText='';
+      }
+      function copyPassword(){
+        const pwd=document.getElementById('result').innerText;
+        if(pwd.includes('Click')||pwd.includes('Select')) return;
+        navigator.clipboard.writeText(pwd).then(()=>{
+          const m=document.getElementById('copy-msg');
+          m.innerText='✅ Copied to clipboard!';
+          setTimeout(()=>m.innerText='',2000);
+        });
+      }
+    </script>
+    """
+    return page(content, "pwd")
+
 
 @app.route("/about")
 def about():
-    return """
-    <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-                background-color: #1a1a2e;
-                text-align: center;
-                font-family: 'Rajdhani', Arial, sans-serif;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background-image: radial-gradient(circle at 20% 50%, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
-            }
-            h1 { font-family: 'Orbitron', Arial, sans-serif; color: #e94560; font-size: 46px; margin-bottom: 30px; text-shadow: 0 0 20px rgba(233,69,96,0.5); }
-            .card { background: linear-gradient(145deg, #16213e, #0f3460); padding: 35px 50px; border-radius: 16px; border: 1px solid rgba(233,69,96,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5); max-width: 500px; }
-            p { color: #a0aec0; font-size: 20px; margin: 10px 0; letter-spacing: 1px; line-height: 1.7; }
-            p span { color: #e94560; font-weight: 600; }
-            .back-btn { display: inline-block; margin-top: 30px; background: linear-gradient(135deg, #e94560, #c73652); color: white; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; }
-            .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
-        </style>
-    </head>
-    <body>
-        <h1>About Me!!</h1>
-        <div class="card">
-            <p>My name is <span>Salar!!</span></p>
-            <p>I am learning <span>Python and Flask!!</span></p>
-            <p>I can build  websites and apps!!</p>
-            <p> we provide ai servise!!</p>
-        </div>
-        <a href="/" class="back-btn">← Home</a>
-    </body>
-    </html>
+    content = """
+    <style>
+      .about-card { max-width:480px; text-align:center; }
+      .about-card p { color:#a0aec0; font-size:19px; margin:12px 0; letter-spacing:1px; line-height:1.7; }
+      .about-card p span { color:#e94560; font-weight:700; }
+    </style>
+    <h1 style="font-size:42px;">About Me!!</h1>
+    <div class="card about-card">
+      <p>My name is <span>Salar!!</span></p>
+      <p>I am learning <span>Python and Flask!!</span></p>
+      <p>I build real websites and apps!!</p>
+    </div>
     """
+    return page(content)
+
 
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "POST":
         name = request.form["name"]
-        return """
-        <html>
-        <head>
-            <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { background-color: #1a1a2e; text-align: center; font-family: 'Rajdhani', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-image: radial-gradient(circle at 20% 50%, #16213e, #1a1a2e, #0f3460); }
-                h1 { font-family: 'Orbitron', Arial, sans-serif; color: #e94560; font-size: 46px; margin-bottom: 15px; text-shadow: 0 0 20px rgba(233,69,96,0.5); }
-                p { color: #a0aec0; font-size: 20px; margin-bottom: 30px; }
-                .back-btn { background: linear-gradient(135deg, #e94560, #c73652); color: white; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; }
-                .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
-            </style>
-        </head>
-        <body>
-            <h1>Hello """ + name + """!!</h1>
-            <p>Thanks for contacting me!!</p>
-            <a href="/" class="back-btn">← Home</a>
-        </body>
-        </html>
+        content = f"""
+        <h1 style="font-size:46px;">Hello {name}!!</h1>
+        <p style="color:#a0aec0; font-size:20px; margin-bottom:30px;">Thanks for contacting me!!</p>
+        <a href="/" class="btn">← Home</a>
         """
-    return """
-    <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { background-color: #1a1a2e; text-align: center; font-family: 'Rajdhani', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-image: radial-gradient(circle at 20% 50%, #16213e, #1a1a2e, #0f3460); }
-            h1 { font-family: 'Orbitron', Arial, sans-serif; color: #e94560; font-size: 46px; margin-bottom: 30px; text-shadow: 0 0 20px rgba(233,69,96,0.5); }
-            .card { background: linear-gradient(145deg, #16213e, #0f3460); padding: 35px 50px; border-radius: 16px; border: 1px solid rgba(233,69,96,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-            input { padding: 12px 20px; font-size: 18px; border-radius: 8px; border: 1px solid rgba(233,69,96,0.3); background: #0a1628; color: white; margin-bottom: 15px; width: 280px; font-family: 'Rajdhani', Arial, sans-serif; outline: none; }
-            input:focus { border-color: #e94560; box-shadow: 0 0 10px rgba(233,69,96,0.3); }
-            button { background: linear-gradient(135deg, #e94560, #c73652); color: white; padding: 12px 30px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; letter-spacing: 1px; transition: all 0.3s; }
-            button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
-            .back-link { display: block; margin-top: 20px; color: #e94560; text-decoration: none; font-size: 16px; }
-        </style>
-    </head>
-    <body>
-        <h1>Contact Me!!</h1>
-        <div class="card">
-            <form method="POST">
-                <input type="text" name="name" placeholder="Your name!!"><br>
-                <button type="submit">Submit!!</button>
-            </form>
-            <a href="/" class="back-link">← Go back home</a>
-        </div>
-    </body>
-    </html>
+        return page(content)
+
+    content = """
+    <style>
+      .contact-card { width:380px; text-align:center; }
+      .contact-card input { width:100%; margin-bottom:16px; text-align:center; }
+    </style>
+    <h1 style="font-size:42px;">Contact Me!!</h1>
+    <div class="card contact-card">
+      <form method="POST">
+        <input type="text" name="name" placeholder="Your name!!">
+        <button type="submit" class="btn" style="width:100%;">Submit!!</button>
+      </form>
+    </div>
     """
+    return page(content)
 
-@app.route("/password")
-def password():
-    return """
-    <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-                background-color: #1a1a2e;
-                text-align: center;
-                font-family: 'Rajdhani', Arial, sans-serif;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background-image: radial-gradient(circle at 20% 50%, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
-            }
-            h1 { font-family: 'Orbitron', Arial, sans-serif; color: #e94560; font-size: 36px; margin-bottom: 25px; text-shadow: 0 0 20px rgba(233,69,96,0.5); }
-            .card { background: linear-gradient(145deg, #16213e, #0f3460); padding: 30px 40px; border-radius: 16px; border: 1px solid rgba(233,69,96,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5); width: 380px; }
-            label { color: #a0aec0; font-size: 16px; display: block; margin-bottom: 6px; text-align: left; letter-spacing: 1px; }
-            input[type=number] { width: 100%; padding: 10px 15px; font-size: 16px; border-radius: 8px; border: 1px solid rgba(233,69,96,0.3); background: #0a1628; color: white; font-family: 'Rajdhani', Arial, sans-serif; outline: none; margin-bottom: 18px; }
-            input[type=number]:focus { border-color: #e94560; box-shadow: 0 0 10px rgba(233,69,96,0.3); }
-            .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-            .option { display: flex; align-items: center; gap: 8px; background: #0a1628; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(233,69,96,0.15); cursor: pointer; transition: all 0.2s; }
-            .option:hover { border-color: rgba(233,69,96,0.5); }
-            .option input[type=checkbox] { accent-color: #e94560; width: 16px; height: 16px; cursor: pointer; }
-            .option span { color: #a0aec0; font-size: 15px; font-weight: 600; }
-            #result { width: 100%; padding: 12px 15px; font-size: 15px; font-family: 'Courier New', monospace; background: #0a1628; color: #e94560; border: 1px solid rgba(233,69,96,0.3); border-radius: 8px; margin-bottom: 15px; letter-spacing: 2px; text-align: center; min-height: 46px; word-break: break-all; }
-            .btn-row { display: flex; gap: 10px; }
-            .btn { flex: 1; background: linear-gradient(135deg, #e94560, #c73652); color: white; padding: 11px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; letter-spacing: 1px; transition: all 0.3s; text-transform: uppercase; }
-            .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
-            .btn.copy { background: linear-gradient(135deg, #533483, #3d2468); }
-            .btn.copy:hover { box-shadow: 0 6px 20px rgba(83,52,131,0.5); }
-            .back-btn { display: inline-block; margin-top: 25px; background: linear-gradient(135deg, #e94560, #c73652); color: white; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; }
-            .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
-            #copy-msg { color: #4caf50; font-size: 14px; margin-top: 8px; height: 18px; transition: opacity 0.3s; }
-        </style>
-    </head>
-    <body>
-        <h1>🔐 Password Generator</h1>
-        <div class="card">
-            <label>Password Length</label>
-            <input type="number" id="length" value="12" min="4" max="64">
-
-            <div class="options">
-                <label class="option">
-                    <input type="checkbox" id="lower" checked>
-                    <span>Lowercase</span>
-                </label>
-                <label class="option">
-                    <input type="checkbox" id="upper" checked>
-                    <span>Uppercase</span>
-                </label>
-                <label class="option">
-                    <input type="checkbox" id="digits" checked>
-                    <span>Digits</span>
-                </label>
-                <label class="option">
-                    <input type="checkbox" id="symbols" checked>
-                    <span>Symbols</span>
-                </label>
-            </div>
-
-            <div id="result">Click Generate!!</div>
-            <div id="copy-msg"></div>
-
-            <div class="btn-row">
-                <button class="btn" onclick="generatePassword()">Generate</button>
-                <button class="btn copy" onclick="copyPassword()">Copy</button>
-            </div>
-        </div>
-        <a href="/" class="back-btn">← Home</a>
-
-        <script>
-            function generatePassword() {
-                const length = parseInt(document.getElementById('length').value);
-                const lower = document.getElementById('lower').checked;
-                const upper = document.getElementById('upper').checked;
-                const digits = document.getElementById('digits').checked;
-                const symbols = document.getElementById('symbols').checked;
-
-                let chars = '';
-                if (lower)   chars += 'abcdefghijklmnopqrstuvwxyz';
-                if (upper)   chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                if (digits)  chars += '0123456789';
-                if (symbols) chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-                if (!chars) {
-                    document.getElementById('result').innerText = 'Select at least one option!!';
-                    return;
-                }
-
-                let password = '';
-                for (let i = 0; i < length; i++) {
-                    password += chars[Math.floor(Math.random() * chars.length)];
-                }
-                document.getElementById('result').innerText = password;
-                document.getElementById('copy-msg').innerText = '';
-            }
-
-            function copyPassword() {
-                const pwd = document.getElementById('result').innerText;
-                if (pwd === 'Click Generate!!' || pwd === 'Select at least one option!!') return;
-                navigator.clipboard.writeText(pwd).then(() => {
-                    const msg = document.getElementById('copy-msg');
-                    msg.innerText = '✅ Copied to clipboard!';
-                    setTimeout(() => msg.innerText = '', 2000);
-                });
-            }
-        </script>
-    </body>
-    </html>
-    """
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
