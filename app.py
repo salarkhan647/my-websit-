@@ -3,9 +3,9 @@ import os
 
 app = Flask(__name__)
 
-# ── Shared header + footer ──────────────────────────────────────────────────
+# ── Shared styles (goes in <head> only) ─────────────────────────────────────
 
-NAV = """
+STYLES = """
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -21,7 +21,7 @@ NAV = """
   /* ── HEADER ── */
   header {
     position: sticky; top: 0; z-index: 100;
-    background: rgba(10, 22, 40, 0.92);
+    background: rgba(10, 22, 40, 0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(233,69,96,0.25);
     display: flex;
@@ -38,7 +38,7 @@ NAV = """
     letter-spacing: 2px;
     text-shadow: 0 0 14px rgba(233,69,96,0.5);
   }
-  nav { display: flex; gap: 6px; }
+  nav { display: flex; gap: 6px; align-items: center; }
   nav a {
     color: #a0aec0;
     text-decoration: none;
@@ -58,7 +58,7 @@ NAV = """
     text-shadow: 0 0 8px rgba(233,69,96,0.6);
   }
 
-  /* ── MAIN CONTENT ── */
+  /* ── MAIN ── */
   main {
     flex: 1;
     display: flex;
@@ -70,7 +70,7 @@ NAV = """
 
   /* ── FOOTER ── */
   footer {
-    background: rgba(10, 22, 40, 0.92);
+    background: rgba(10, 22, 40, 0.95);
     border-top: 1px solid rgba(233,69,96,0.2);
     display: flex;
     align-items: center;
@@ -88,7 +88,8 @@ NAV = """
     transition: color 0.2s;
   }
   footer a:hover { color: #e94560; }
-  footer span { color: rgba(233,69,96,0.3); font-size: 18px; }
+  footer .dot { color: rgba(233,69,96,0.35); font-size: 18px; }
+  footer .copy { color: #a0aec0; font-size: 13px; }
 
   /* ── SHARED COMPONENTS ── */
   h1 {
@@ -136,32 +137,50 @@ NAV = """
   }
   input:focus { border-color: #e94560; box-shadow: 0 0 10px rgba(233,69,96,0.3); }
 </style>
-
-<header>
-  <a class="logo" href="/">SALAR.DEV</a>
-  <nav>
-    <a href="/" {home}>Home</a>
-    <a href="/calculator" {calc}>Calculator</a>
-    <a href="/password" {pwd}>🔐 Password</a>
-  </nav>
-</header>
 """
+
+def make_header(active=""):
+    home_cls  = 'class="active"' if active == "home" else ""
+    calc_cls  = 'class="active"' if active == "calc" else ""
+    pwd_cls   = 'class="active"' if active == "pwd"  else ""
+    return f"""
+    <header>
+      <a class="logo" href="/">SALAR.DEV</a>
+      <nav>
+        <a href="/" {home_cls}>Home</a>
+        <a href="/calculator" {calc_cls}>Calculator</a>
+        <a href="/password" {pwd_cls}>🔐 Password</a>
+      </nav>
+    </header>
+    """
 
 FOOTER = """
 <footer>
   <a href="/about">About Me</a>
-  <span>·</span>
+  <span class="dot">·</span>
   <a href="/contact">Contact</a>
-  <span>·</span>
-  <span style="color:#a0aec0; font-size:13px;">© 2026 Salar</span>
+  <span class="dot">·</span>
+  <span class="copy">© 2026 Salar</span>
 </footer>
 """
 
 def page(content, active=""):
-    nav = NAV.replace("{home}", 'class="active"' if active=="home" else "") \
-             .replace("{calc}", 'class="active"' if active=="calc" else "") \
-             .replace("{pwd}",  'class="active"' if active=="pwd"  else "")
-    return f"<html><head>{nav}</head><body>{nav}<main>{content}</main>{FOOTER}</body></html>"
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Salar.dev</title>
+      {STYLES}
+    </head>
+    <body>
+      {make_header(active)}
+      <main>{content}</main>
+      {FOOTER}
+    </body>
+    </html>
+    """
 
 
 # ── ROUTES ──────────────────────────────────────────────────────────────────
@@ -234,7 +253,7 @@ def password():
     content = """
     <style>
       .pw-card { width:380px; text-align:left; }
-      .pw-card label.field-label { color:#a0aec0; font-size:15px; letter-spacing:1px; display:block; margin-bottom:6px; }
+      .pw-card .field-label { color:#a0aec0; font-size:15px; letter-spacing:1px; display:block; margin-bottom:6px; }
       .pw-card input[type=number] { width:100%; margin-bottom:18px; }
       .options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
       .opt { display:flex; align-items:center; gap:8px; background:#0a1628;
@@ -253,7 +272,7 @@ def password():
     </style>
     <h1 style="font-size:34px;">🔐 Password Generator</h1>
     <div class="card pw-card">
-      <label class="field-label">Password Length</label>
+      <span class="field-label">Password Length</span>
       <input type="number" id="length" value="12" min="4" max="64">
       <div class="options">
         <label class="opt"><input type="checkbox" id="lower" checked><span>Lowercase</span></label>
