@@ -124,6 +124,18 @@ STYLES = """
   input:focus, textarea:focus { border-color:var(--red); box-shadow:0 0 10px rgba(233,69,96,0.3); }
   textarea { resize:vertical; width:100%; }
   .tag { display:inline-block; background:rgba(233,69,96,0.15); color:var(--red); border:1px solid rgba(233,69,96,0.35); border-radius:20px; padding:3px 12px; font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+  /* saved items list */
+  .saved-list { margin-top: 20px; max-height: 200px; overflow-y: auto; border-top: 1px solid rgba(233,69,96,0.2); padding-top: 15px; }
+  .saved-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg4); border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; border-left: 3px solid var(--red); }
+  .saved-label { font-weight: bold; color: var(--red); margin-right: 10px; word-break: break-all; flex: 1; cursor: pointer; }
+  .saved-value { font-family: monospace; color: var(--text-muted); font-size: 12px; margin-right: 10px; word-break: break-all; flex: 2; cursor: pointer; }
+  .saved-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 0 5px; transition: color 0.2s; }
+  .saved-del:hover { color: var(--red); }
+  .history-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg4); border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+  .history-item:hover { background: rgba(233,69,96,0.1); }
+  .history-expr { font-family: monospace; color: #fff; }
+  .history-result { color: var(--red); font-weight: bold; margin-left: 10px; }
+  .clear-btn { margin-top: 10px; width: 100%; background: var(--bg3); border: 1px solid rgba(233,69,96,0.3); }
 </style>
 """
 
@@ -333,7 +345,7 @@ def new_post():
     return page(content, "blog")
 
 
-# ── CALCULATOR ────────────────────────────────────────────────────────────────
+# ── CALCULATOR with Save & Autofill History ───────────────────────────────────
 
 @app.route("/calculator")
 def calculator():
@@ -345,6 +357,7 @@ def calculator():
       .op  { background:linear-gradient(135deg,var(--purple),var(--purple-dark)); color:white; }
       .calc-grid button:hover  { transform:scale(1.08); box-shadow:0 4px 15px rgba(233,69,96,0.4); }
       .calc-grid button:active { transform:scale(0.95); }
+      .history-panel { margin-top: 30px; border-top: 1px solid rgba(233,69,96,0.2); padding-top: 20px; width: 100%; }
     </style>
     <h1 style="font-size:36px;">Calculator</h1>
     <div class="card">
@@ -355,22 +368,86 @@ def calculator():
         <button class="num" onclick="press('1')">1</button><button class="num" onclick="press('2')">2</button><button class="num" onclick="press('3')">3</button><button class="op" onclick="press('*')">×</button><br>
         <button class="op" onclick="clearD()">C</button><button class="num" onclick="press('0')">0</button><button class="op" onclick="calc()">=</button><button class="op" onclick="press('/')">÷</button>
       </div>
+      
+      <div class="history-panel">
+        <h3 style="color:var(--red); font-size:18px; margin-bottom:10px;">📜 History (click to autofill)</h3>
+        <div id="historyList"></div>
+        <button class="btn clear-btn" onclick="clearHistory()">Clear History</button>
+      </div>
     </div>
     <script>
-      function press(v){var d=document.getElementById('display');d.value=d.value=='0'?v:d.value+v;}
-      function clearD(){document.getElementById('display').value='0';}
-      function calc(){try{document.getElementById('display').value=eval(document.getElementById('display').value);}catch(e){document.getElementById('display').value='Error';}}
+      // Load history from localStorage
+      let calculationHistory = JSON.parse(localStorage.getItem('calc_history') || '[]');
+      
+      function saveHistory() {
+        localStorage.setItem('calc_history', JSON.stringify(calculationHistory));
+        renderHistory();
+      }
+      
+      function renderHistory() {
+        const container = document.getElementById('historyList');
+        if (calculationHistory.length === 0) {
+          container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">No saved calculations</div>';
+          return;
+        }
+        container.innerHTML = calculationHistory.map((item, idx) => 
+          `<div class="history-item" onclick="useHistory(${idx})">
+            <span class="history-expr">${item.expr}</span>
+            <span class="history-result">= ${item.result}</span>
+          </div>`
+        ).join('');
+      }
+      
+      function useHistory(idx) {
+        const item = calculationHistory[idx];
+        document.getElementById('display').value = item.expr;
+      }
+      
+      function clearHistory() {
+        calculationHistory = [];
+        saveHistory();
+      }
+      
+      // Modified calc to save expression and result
+      let originalCalc = window.calc;
+      window.calc = function() {
+        let display = document.getElementById('display');
+        let expr = display.value;
+        try {
+          let result = eval(expr);
+          display.value = result;
+          // Save to history if not duplicate of last
+          if (calculationHistory.length === 0 || calculationHistory[0].expr !== expr) {
+            calculationHistory.unshift({ expr: expr, result: result });
+            if (calculationHistory.length > 20) calculationHistory.pop();
+            saveHistory();
+          }
+        } catch(e) {
+          display.value = 'Error';
+        }
+      }
+      
+      function press(v) {
+        var d = document.getElementById('display');
+        d.value = d.value == '0' ? v : d.value + v;
+      }
+      function clearD() {
+        document.getElementById('display').value = '0';
+      }
+      
+      // initial render
+      renderHistory();
     </script>"""
     return page(content, "calc")
 
 
-# ── PASSWORD ──────────────────────────────────────────────────────────────────
+# ── PASSWORD GENERATOR with Save & Autofill ───────────────────────────────────
 
 @app.route("/password")
 def password():
     content = """
     <style>
-      .pw-card { width:380px; text-align:left; }
+      .pw-card { width:420px; text-align:left; }
       .field-label { color:var(--text-muted); font-size:15px; letter-spacing:1px; display:block; margin-bottom:6px; }
       .pw-card input[type=number] { width:100%; margin-bottom:18px; }
       .options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
@@ -380,8 +457,19 @@ def password():
       .opt span { color:var(--text-muted); font-size:15px; font-weight:600; }
       #result { width:100%; padding:12px 15px; font-size:14px; font-family:'Courier New',monospace; background:var(--bg4); color:var(--red); border:1px solid rgba(233,69,96,0.3); border-radius:8px; margin-bottom:6px; text-align:center; min-height:46px; word-break:break-all; letter-spacing:2px; }
       #copy-msg { color:#4caf50; font-size:13px; height:18px; margin-bottom:12px; text-align:center; }
-      .btn-row { display:flex; gap:10px; }
+      .btn-row { display:flex; gap:10px; margin-bottom:20px; }
       .btn-row .btn { flex:1; padding:12px; font-size:15px; text-align:center; }
+      .save-section { border-top: 1px solid rgba(233,69,96,0.2); padding-top: 20px; margin-top: 10px; }
+      .save-row { display:flex; gap:10px; margin-bottom:15px; }
+      #save-label { flex:2; }
+      #save-pass-btn { flex:1; }
+      .saved-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg4); border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+      .saved-item:hover { background: rgba(233,69,96,0.1); }
+      .saved-info { flex: 1; display: flex; gap: 10px; align-items: baseline; overflow: hidden; }
+      .saved-label { font-weight: bold; color: var(--red); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+      .saved-pass { font-family: monospace; color: var(--text-muted); font-size: 12px; word-break: break-all; flex: 1; }
+      .saved-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 0 8px; }
+      .saved-del:hover { color: var(--red); }
     </style>
     <h1 style="font-size:34px;">🔐 Password Generator</h1>
     <div class="card pw-card">
@@ -399,8 +487,76 @@ def password():
         <button class="btn" onclick="generatePassword()">Generate</button>
         <button class="btn purple" onclick="copyPassword()">Copy</button>
       </div>
+      
+      <div class="save-section">
+        <div class="save-row">
+          <input type="text" id="save-label" placeholder="Label (e.g. Gmail)" class="save-label-input">
+          <button class="btn purple" id="save-pass-btn" onclick="saveCurrentPassword()">Save Password</button>
+        </div>
+        <h3 style="color:var(--red); font-size:16px; margin-bottom:10px;">💾 Saved Passwords (click to autofill)</h3>
+        <div id="savedPasswordsList"></div>
+      </div>
     </div>
     <script>
+      let savedPasswords = JSON.parse(localStorage.getItem('saved_passwords') || '[]');
+      
+      function renderSavedPasswords() {
+        const container = document.getElementById('savedPasswordsList');
+        if (savedPasswords.length === 0) {
+          container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">No saved passwords</div>';
+          return;
+        }
+        container.innerHTML = savedPasswords.map((item, idx) => `
+          <div class="saved-item" onclick="autofillPassword(${idx})">
+            <div class="saved-info">
+              <span class="saved-label">${escapeHtml(item.label)}</span>
+              <span class="saved-pass">${escapeHtml(item.password)}</span>
+            </div>
+            <button class="saved-del" onclick="event.stopPropagation(); deletePassword(${idx})">🗑️</button>
+          </div>
+        `).join('');
+      }
+      
+      function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          return m;
+        });
+      }
+      
+      function saveCurrentPassword() {
+        const password = document.getElementById('result').innerText;
+        if (password.includes('Click') || password.includes('Select')) {
+          document.getElementById('copy-msg').innerText = 'Generate a password first!';
+          setTimeout(() => document.getElementById('copy-msg').innerText = '', 1500);
+          return;
+        }
+        let label = document.getElementById('save-label').value.trim();
+        if (label === '') label = `Password ${savedPasswords.length+1}`;
+        savedPasswords.unshift({ label: label, password: password });
+        if (savedPasswords.length > 20) savedPasswords.pop();
+        localStorage.setItem('saved_passwords', JSON.stringify(savedPasswords));
+        renderSavedPasswords();
+        document.getElementById('save-label').value = '';
+        document.getElementById('copy-msg').innerText = 'Password saved!';
+        setTimeout(() => document.getElementById('copy-msg').innerText = '', 1500);
+      }
+      
+      function autofillPassword(idx) {
+        const password = savedPasswords[idx].password;
+        document.getElementById('result').innerText = password;
+        document.getElementById('copy-msg').innerText = 'Autofilled! Click Copy if needed.';
+        setTimeout(() => document.getElementById('copy-msg').innerText = '', 1500);
+      }
+      
+      function deletePassword(idx) {
+        savedPasswords.splice(idx, 1);
+        localStorage.setItem('saved_passwords', JSON.stringify(savedPasswords));
+        renderSavedPasswords();
+      }
+      
       function generatePassword(){
         const len=parseInt(document.getElementById('length').value);
         let chars='';
@@ -423,6 +579,8 @@ def password():
           setTimeout(()=>m.innerText='',2000);
         });
       }
+      
+      renderSavedPasswords();
     </script>"""
     return page(content, "pwd")
 
